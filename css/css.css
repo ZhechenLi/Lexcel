@@ -1,0 +1,38 @@
+body{
+	padding-top: 170px;	
+	margin-bottom: : 0px;	
+
+}
+
+header{
+	background: white;
+}
+
+.sheet{
+	overflow-x：scroll;
+}
+.cell{
+	/*width: 250px;*/
+	height: 37px;
+	width: 67px;
+	margin: 0px;
+	padding: 0px;
+	text-align: center;
+	
+}
+
+.table{
+	overflow-x: scroll; 
+	width: 2000px;
+}
+
+.nav{
+	background: white;
+}
+.cellInput{
+	margin: 0px;
+	padding: 0px; 
+	border: 0px;
+z-index: 999;
+	position: absolute;
+}

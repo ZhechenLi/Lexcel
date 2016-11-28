@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Lexcel</title>
+	<meta charset="utf-8">
+	<!-- 新 Bootstrap 核心 CSS 文件 -->
+	<link href="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+	
+	<!-- jQuery文件。务必在bootstrap.min.js 之前引入 -->
+	<script src="http://cdn.static.runoob.com/libs/jquery/2.1.1/jquery.min.js"></script>
+
+	<!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+	<script src="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script src="scripts/app.js"></script>
+	<link href="css/css.css" rel="stylesheet">
+</head>
+<body>
+<!-- <input type="text" name="cell" style="top:238.5px; position: absolute; width: 65px; height: 37px; margin: 0px; padding: 0px; background: #f9f9f9; border: 0px;"> -->
+<header>
+	
+	<ul class="nav nav-pills navbar-fixed-top">
+		<h1 class="page-header">
+			LEXCEL
+			<small>Designed by Lawrence</small>
+		</h1>
+		<li class="active"><a href="#">文件</a></li>
+		<li class="dropdown">
+			<a href="#" id="editNavbar" class="dropdown-toggle" data-toggle="dropdown">编辑
+				<b class="caret"></b>
+			</a>
+			<ul class="dropdown-menu">
+				<li><a>a</a></li>
+				<li><a>b</a></li>
+				<li><a>c</a></li>
+				<li><a>d</a></li>
+			</ul>
+		</li>
+		<li><a href="#">插入</a></li>
+		<li><a href="#">公式</a></li>
+		<li><a href="#">视图</a></li>
+		<br>
+		<hr>
+	</ul>
+</header>
+<input type="type" class="a" onblur="myFunction(this)">
+<!-- <div >a</div> -->
+
+<div class="tab-content">
+
+    <div id="sheet1" class="tab-pane in active" >	
+	   
+		<!-- <table class="table">
+			<tbody>
+				<tr>
+					<td class="cell">da</td>
+				</tr>
+			</tbody>
+		</table> -->
+ <h3>菜单 0</h3>
+	  <p>这是菜单 1 显示的内容。这是菜单 1 显示的内容。这是菜单 1 显示的内容。</p>
+			
+	</div>
+	<div id="sheet2" class="tab-pane">
+	  <h3>菜单 1</h3>
+	  <p>这是菜单 1 显示的内容。这是菜单 1 显示的内容。这是菜单 1 显示的内容。</p>
+	</div>
+	<div id="sheet3" class="tab-pane">
+	  <h3>菜单 2</h3>
+	  <p>这是菜单 2 显示的内容。这是菜单 2 显示的内容。这是菜单 2 显示的内容。</p>
+	</div>
+	<div id="sheet4" class="tab-pane">
+	  <h3>菜单 3</h3>
+	  <p>这是菜单 3 显示的内容。这是菜单 3 显示的内容。这是菜单 3 显示的内容。</p>
+	</div>
+</div>
+
+<footer>
+	<ul class="nav nav-tabs nav-justified navbar-fixed-bottom">
+		<li class="active"><a data-toggle="tab" href="#sheet1">sheet1</a></li>
+		<li><a data-toggle="tab" href="#sheet2">sheet2</a></li>
+		<li><a data-toggle="tab" href="#sheet3">sheet3</a></li>
+		<li><a data-toggle="tab" href="#sheet4">sheet4</a></li>
+		
+		<p id="status" style="background: #337ab7; color: white; margin: 0px;">就绪</p>
+	</ul>
+</footer>
+
+<script>
+$("tbody .cell").click(function(){
+	console.log($(this).offset().top);
+	console.log($(this).offset().left);
+	console.log('width:' + $(this).width());
+	console.log('height:' + $(this).height());
+	
+})
+$(".cell").click(function(){
+	console.log($(this).offset().top);
+	console.log($(this).offset().left);
+	console.log('width:' + $(this).width());
+	console.log('height:' + $(this).height());
+	
+})
+// $('.a').bind('input onblur ', function() {
+//     	console.log($(this).val().length + ' characters');
+// 	});
+function myFunction(){
+	console.log(this);
+}
+
+</script>
+</body>
+</html>
