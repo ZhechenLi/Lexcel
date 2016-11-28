@@ -1,43 +1,97 @@
-var cellModel = {
-	"currentCells": [
+var cellModel = (function() {
 
-	],
-	"cells": {
-		"a": {
-			"1": {"value": 0}
+		// 创建一个二维数组
+	var cells = {},
+		// 当前处于激活状态的表格元素(可能是一个或以上)
+		currentCells = {},
+		size = {
+			// 默认的列宽及行高分别为80和20
+			width: {'default': 80},
+			height: {'default': 20}
+		};
+
+	var cell = function(col, row, value) {
+		this.name = col + row;
+		this.col = col;
+		this.row = row;
+		this.value = value;
+	};
+
+	return {
+		setCell: function(col, row, value) {
+			var newCell = new cell(col, row, value);
+			cells[newCell.name] = newCell;
+		},
+		getCell: function(col, row) {
+			var id = col + row;
+			return cells[id];
+		},
+		getAllCells: function() {
+			return cells;
+		},
+		setCurrentCells: function(col, row) {
+			//设置当前激活的单元格
+			var id = col + row;
+			currentCells[id] = cells[id];
+			console.log('Cell \'' + currentCells[id].name + '\' has been added in currentCells');
+		},
+		getCurrentCells: function() {
+			console.log('getCurrentCells() has been call');		
+			console.log(currentCells);	
+			return currentCells;
+		},
+		clearCurrentCells: function() {
+			currentCells = {};
+		},
+		setSize: function(size, pos, isCol) {
+			//当isCol为true,表示将要改变的为列宽, false则为行高.
+			if(isCol){
+				// 将指定的列设为指定的宽度
+				size.col[pos] = size;
+			}else{
+				size.row[pos] = size;
+			}
+		},
+		getSize: function() {
+			return size;
 		}
 	}
-}
+}());
 
-var octopus = function(){
-	this.getCurrentCell = function(){
-		return cellModel.currentCells;
-	},
-	this.changeCurrentCell = function(cell){
-		cellModel.currentCells = cell();
-	},
-	this.changeCell = function(col, row, value) {
-		cellModel.cells.col.row.value = value;
+var render = function(){;
+	var size = cellModel.getSize(),
+		windowWidth = $(window).height(),
+		windowHeight = $(window).height(),
+		i,y,
+		colNum = windowWidth/size.width,
+		rowNum = windowWidth/size.height
+
+	var sheet = '<tr>';
+
+	for(i = colNum + 1; i > 0; i -- ) {
+		for(y = rowNum + 1; y > 0; i -- ) {
+			sheet += '<td class="cell"></td>'
+		}
 	}
 
+	$("#sheet1").append('<table class="table table-bordered"><tbody></tbody></table>');
+	
+	$("#sheet1 tbody").append(sheet);
+	
+
+
 }
 
-var render = function(){
-	this.init = function(){
-		cellInit();
-		titleRender();
-	}
-	function cellInit() {
-
-	}
-	function titleRender(){
-
-	};
-}
+$(window).load(function(){
+	console.log($(window).height());
+	console.log($(window).width());
+	console.log($(document).height());
+	console.log($(document).width());
+});
 
 
 
-
+/*
 $(window).load(function(){
 	var sheet = '<tr>';
 	for(var cols = 30; cols > 0; cols -- ) {
@@ -95,16 +149,19 @@ $(window).load(function(){
 	 //    	*/
 	    	
 		// });
+		// 
 		//失去焦点时将值写入表格元素
+		
+		/*
 		$('.cellInput').blur(function(){
 			console.log($(this).val());
 			$(cell.text($(this).val()))
 		})
 	})
 	
-	
-	
+		
 
 
+
 	
-});
+ });***/
