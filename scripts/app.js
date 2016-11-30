@@ -68,7 +68,7 @@ var cellModel = (function() {
 		},
 		clearCurrentCells: function() {
 			currentCells = {};
-			if(!currentCells.length){
+			if(currentCells.length){
 				console.log('currentCells clear fail');
 			}
 		},
@@ -90,18 +90,26 @@ var cellModel = (function() {
 }());
 
 var render = function(){
-	var size = cellModel.getSize(),
+	var size = cellModel.getSize(),		// 初始化时取得默认值
 		windowWidth = $(window).width(),
 		windowHeight = $(window).height(),
-		i,y,
+		i,y, // 循环因子
 		colNum = windowWidth/size.col_width.default,	//根据窗口宽度除以单元格宽度取得第一次渲染的单元格数量
 		rowNum = windowWidth/size.row_height.default;
-
-	// console.log(size, colNum, rowNum);
 	
+	/*
+	
+
+						单元格初始化
+
+	 */
+
+
+
 	//创建表头
 	$('#sheet1').append('<table class="table table-bordered table-head"><tbody></tbody></table>');
 	var sheet = '';
+
 	//创建列号a, b, c, d...
 	sheet += '<tr class="th">';
 	for(i = 0; i < colNum + 1; i ++ ) {
@@ -127,15 +135,56 @@ var render = function(){
 			$(this).closest('tr').append('<td class="cell" id="' + cell.name + '"></td>');
 		}
 	});
-	console.log(cellModel.getAllCells());
-	// 
-	//为每个cell添加鼠标监听(单击, 双击)
+	
+
+	/*
+	
+
+						单元格初始化
+
+	*/
+
+
+	// 为每个cell添加鼠标监听(单击, 双击)
 	// $('.cell').click(function(){
 	// 	clearCurCellsStyle();
-	// 	// $(this).addClass("currentCells");
-	// 	// $(this).attr("style", "border: 5px solid #5c7a29;");
+	// 	$(this).addClass("currentCells")
 	// 	cellModel.setCurrentCells($(this).attr('id'));
+	// 	setCurCellsStyle();	//对选中的单元格进行渲染
 	// })
+	
+
+	var mouseStatus = 'up';	// 记录鼠标左键是否松开
+	$('.cell').mousedown(function(){
+		mouseStatus = 'down';
+		console.log('mousedown');
+		clearCurCellsStyle();
+		$(this).addClass("currentCells");
+		cellModel.setCurrentCells($(this).attr('id'));
+		setCurCellsStyle();	//对选中的单元格进行渲染
+	});
+
+	$('.cell').mouseup(function(){
+		console.log('mouseup');
+		mouseStatus = 'up';
+	});
+
+	
+	$('.cell').mousemove(function(){
+		if(	mouseStatus == 'down'){
+			console.log('mousemove!!');
+
+			$(this).addClass("currentCells");
+			cellModel.setCurrentCells($(this).attr('id'));
+			setCurCellsStyle();	//对选中的单元格进行渲染
+		}
+	});
+	
+	// $('.cell').mousemove(function(){
+	// 	console.log('mousemove!!');
+	// })
+	
+	
 
 
 
@@ -143,10 +192,15 @@ var render = function(){
 
 
 	
-	
+	// 清除当前激活单元格的渲染
 	var clearCurCellsStyle = function() {
 		cellModel.clearCurrentCells();
+		$('.currentCells').each(function(){
+			$(this).removeAttr('style');
+			$(this).removeClass('currentCells');
+		})
 	}
+
 	//对当前激活的单元格进行渲染
 	var setCurCellsStyle = function() {
 		var curCells = cellModel.getCurrentCells(),
@@ -167,18 +221,52 @@ var render = function(){
 		bottom = Math.max.apply(null, cellTemp.row);
 		left = Math.min.apply(null, cellTemp.col);
 		right = Math.max.apply(null, cellTemp.col);
-		// console.log(' cellTemp ' + cellTemp.col);
-		// console.log(' cellTemp ' + cellTemp.row);
-		// console.log('top: ' + top + ' bottom: ' + bottom + ' left: ' + left + ' right: ' + right);
 		
-		
-		
-		
-		
+		$('.currentCells').each(function(){
+			$(this).removeAttr('style');
+			var thisCell = $(this);
+			var id = dealId(thisCell.attr('id'));
+			// console.log(id);
+			// console.log(' cellTemp.col ' + cellTemp.col);
+			// console.log(' cellTemp.row ' + cellTemp.row);
+			// console.log('top: ' + top + ' bottom: ' + bottom + ' left: ' + left + ' right: ' + right);
+	
+			// if(id[1] == top) {
+			// 	thisCell.attr('style', 'border-top:5px solid #5c7a29;')
+			// } else if(id[1] == bottom) {
+			// 	thisCell.attr('style', 'border-bottom:5px solid #5c7a29;')
+			// } else if(id[0] == left) {
+			// 	thisCell.attr('style', 'border-left:5px solid #5c7a29;')
+			// } else if(id[0] == right) {
+			// 	thisCell.attr('style', 'border-right:5px solid #5c7a29;')
+			// }
+			
+			// 设置激活区域的边框颜色
+			thisCell.css((function(){
+				var boderSet = {},
+					borderStyle = '3px solid #5c7a29';
+
+				if(id[1] == top) {
+					boderSet['border-top'] = borderStyle;
+				}  
+				if(id[1] == bottom) {
+					boderSet['border-bottom'] = borderStyle;
+				} 
+				if(transToNum(id[0]) == left) {
+					boderSet['border-left'] = borderStyle;
+				}
+				if(transToNum(id[0]) == right) {
+					boderSet['border-right'] = borderStyle;
+				}
+				// console.log(id);
+				// console.log(boderSet)
+				return boderSet;
+			}()))
+			// thisCell.css({'border-top': '5px solid #5c7a29'});
+		})
+
 	}
-	cellModel.setCurrentCells('a1');
-	// console.log(cellModel.getCurrentCells());
-	setCurCellsStyle();
+
 
 
 	$(document).mousemove(function(e) {
@@ -249,6 +337,13 @@ function transToNum(char) {
 	return result;	
 }
 
+// 将id从字母加数字的字符串转换成数字加数字的数组,例:'a1' -> [1,1]
+function dealId(id) {
+	var col = id.replace(/[0-9]+$/g, ''),
+		row = id.replace(/^[a-z]+/gi, ''),
+		result = [col,row];
+	return result;
+}
 
 
 
