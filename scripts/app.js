@@ -8,8 +8,11 @@ var cellModel = (function() {
 			// 默认的列宽及行高分别为80和20
 			col_width: {'default': 60},
 			row_height: {'default': 20}
-		}
-		;
+		},
+		top,
+		bottom,
+		left,
+		right;
 
 	// 定义一个cell类以存储单个单元格信息
 	var cell = function(col, row, value) {	
@@ -35,26 +38,34 @@ var cellModel = (function() {
 		// 		d1,d2,d3,
 		// 		e1,e2,e3,
 		// }
-		// 返回{'top': 1, 'bottom': 5, 'left': 1, 'right': 3};
+		// 返回{'top': 1, 'bottom': 5, 'left': 1, 'right': 3}; 
+		// 输入当前鼠标悬停的单元格id
 		getCurCellsRange: function() {
-			var top,
-				bottom,
-				left,
-				right,
-				cellTemp = {
+			var cellTemp = {
 					'col': [],
 					'row': []
 				};
 
-			for(curCell in currentCells){
-				cellTemp.col.push(transToNum(currentCells[curCell].col)); 
-				cellTemp.row.push(currentCells[curCell].row); 
+			if (currentCells.length == 1) {
+
+				top = cells[id].row;
+				bottom = cells[id].row;
+				left = transToNum(cells[id].col);
+				right = transToNum(cells[id].col);
+
+			} else {
+				for(curCell in currentCells){
+					cellTemp.col.push(transToNum(currentCells[curCell].col)); 
+					cellTemp.row.push(currentCells[curCell].row); 
+				}
+
+				top = Math.min.apply(null, cellTemp.row);
+				bottom = Math.max.apply(null, cellTemp.row);
+				left = Math.min.apply(null, cellTemp.col);
+				right = Math.max.apply(null, cellTemp.col);
 			}
 
-			top = Math.min.apply(null, cellTemp.row);
-			bottom = Math.max.apply(null, cellTemp.row);
-			left = Math.min.apply(null, cellTemp.col);
-			right = Math.max.apply(null, cellTemp.col);
+			
 
 			return {'top': top,
 					'bottom': bottom,
@@ -62,12 +73,46 @@ var cellModel = (function() {
 					'right': right
 			};
 		},
-		setCell: function(col, row, value) {
-			var newCell = new cell(col, row, value);
-			cells[newCell.name] = newCell;
+		setCurRangeTop: function(top) {
+			this.top = top;
 		},
-		getCell: function(col, row) {
-			var id = transToAlpha(col) + row;
+		setCurRangeBottom: function(bottom) {
+			this.bottom = bottom;
+		},
+		setCurRangeLeft: function(left) {
+			this.left = left;
+		},
+		setCurRangeRight: function(right) {
+			this.right = right;
+		},
+		getCurRangeTop: function(top) {
+			return top;
+		},
+		getCurRangeBottom: function(bottom) {
+			return bottom;
+		},
+		getCurRangeLeft: function(left) {
+			return left;
+		},
+		getCurRangeRight: function(right) {
+			return right;
+		},
+
+		setCell: function(col, row, value) {
+			var id = col + row;
+			if(!(id in cells)){
+				var newCell = new cell(col, row, value);
+				cells[newCell.name] = newCell;
+			} else {
+				cells[id].value = value;
+			}
+			
+		},
+		getCell: function(id) {
+			
+			if((typeof sparateId(id)[0] != 'string') && (typeof sparateId(id)[1] != 'number')) {
+				console.log('getCell() id is wrong!');
+			}
 			return cells[id];
 		},
 		getAllCells: function() {
@@ -83,26 +128,11 @@ var cellModel = (function() {
 		// },
 		// 传入被激活的单元格的id
 		setCurrentCells: function(id) {
-			// console.log('id : ' + id + ' cells[' + id + '] = ' + cells[id]);
-			// console.log(cells[id]);
-			console.log($('#' + id));
-			// console.log('dasd');
-			if (cells[id]) {
+			if (!(id in currentCells)) {
 				currentCells[id] = cells[id];
-				console.log('setCurCell');
+				// console.log('setCurCell');
 				$('#' + id).addClass('currentCells');
-
-				// console.log(currentCells[id]);
-				// console.log('Cell \'' + currentCells[id].name + '\' has been added in currentCells');
-				// console.log('Here is all the currentCells:');
-				// for (curCell in currentCells) {
-				// 	console.log(curCell);
-				// }
-			}else {
-				console.log('Call setCurrentCells() fail');
 			}
-			
-			
 		},
 		getCurrentCells: function() {
 			console.log('currentCells now was : ');
@@ -110,6 +140,9 @@ var cellModel = (function() {
 				console.log(currentCells[cell]);
 			}	
 			return currentCells;
+		},
+		deleteCurrentCell: function(id) {
+			delete currentCells[id];
 		},
 		clearCurrentCells: function() {
 			currentCells = {};
@@ -147,9 +180,38 @@ var render = function(){
 
 						单元格初始化
 
-	 */
+	*/
 
+	var initTable = function(sheetId) {
+		//创建表头
+		$('#' + sheetId).append('<table class="table table-bordered table-head"><tbody></tbody></table>');
+		var sheet = '';
+		//创建列号a, b, c, d...
+		sheet += '<tr class="th">';
+		for(i = 0; i < colNum + 1; i ++ ) {
+			sheet += '<td class="th-col" id="col-' + transToAlpha(i) + '" style="padding: 0px;">' + transToAlpha(i) + '</td>';
+		}
+		//创建行号1, 2, 3, 4...
+		sheet += '</tr>';
+		for(y = 1; y < rowNum + 1; y ++ ) {
+			sheet += '<tr><td class="th-row" id="row-' + y + '" style="padding: 0px;">' + y + '</td></tr>';
+		}
 
+		$('#' + sheetId + '.table-head').append(sheet);
+
+		// 创建刚好能覆盖整个页面的单元格
+		var th_row = $('.th-row');
+
+		th_row.each(function(row){
+
+			for(var col = 0; col < colNum * 2; col ++ ) {
+				cellModel.setCell(col + 1, row + 1, 0);
+				var cell = cellModel.getCell(col + 1, row + 1);
+				$(this).closest('tr').append('<td class="cell" id="' + cell.name + '"></td>');
+			}
+		});
+
+	};
 
 	//创建表头
 	$('#sheet1').append('<table class="table table-bordered table-head"><tbody></tbody></table>');
@@ -175,24 +237,18 @@ var render = function(){
 		// console.log(row);
 		for(var col = 0; col < colNum; col ++ ) {
 			cellModel.setCell(col + 1, row + 1, 0);
-			var cell = cellModel.getCell(col + 1, row + 1);
+			var cell = cellModel.getCell(combinId(transToAlpha(col + 1), row + 1));
 			// console.log(cell);
 			$(this).closest('tr').append('<td class="cell" id="' + cell.name + '"></td>');
 		}
 	});
 	
-	// console.log($('#j1').addClass('currentCells'));
 	console.log('render');
 	/*
 	
 		单元格初始化
 
 	*/
-
-
-
-	
-
 	var mouseStatus = 'up';	// 记录鼠标左键是否松开
 
 	$('.cell').mousedown(function(){
@@ -212,25 +268,12 @@ var render = function(){
 	$('.cell').mousemove(function(){
 		if(	mouseStatus == 'down'){
 			console.log('mousemove!!');
-
-			
 			cellModel.setCurrentCells($(this).attr('id'));
-			setCurRange()
+			setCurRange($(this).attr('id'));
 			setCurCellsStyle();	//对选中的单元格进行渲染
+
 		}
 	});
-	
-	// $('.cell').mousemove(function(){
-	// 	console.log('mousemove!!');
-	// })
-	
-
-
-
-
-
-
-
 	
 	// 清除当前激活单元格的渲染
 	var clearCurCellsStyle = function() {
@@ -238,13 +281,12 @@ var render = function(){
 		$('.currentCells').each(function(){
 			$(this).removeAttr('style');
 			$(this).removeClass('currentCells');
-		})
+		});
 	}
 
 	//对当前激活的单元格进行渲染
 	var setCurCellsStyle = function() {		
 		var range = cellModel.getCurCellsRange();
-		// console.log(range);
 		$('.currentCells').each(function(){
 			$(this).removeAttr('style');
 			var thisCell = $(this);
@@ -270,26 +312,27 @@ var render = function(){
 				return boderSet;
 			}()))
 		})
-
 	}
 
-	var setCurRange = function() {
-		var range = cellModel.getCurCellsRange()
+	var setCurRange = function(first_id, cur_id) {
+		var range = cellModel.getCurCellsRange(),
+			firstCell = cellModel.getCell(first_id),
+			curCell = cellModel.getCell(cur_id);
+		
 		for(var row = range.top; row <= range.bottom; row ++) {
-			for(var col = range.left; col <= range.right; col ++) {
-				cellModel.setCurrentCells(combinId(col, row));
+			for(var col_num = range.left; col_num <= range.right; col_num ++) {
+
+				if(row > curCell['row'] || col_num > transToNum(curCell['col'])) {
+					cellModel.deleteCurrentCell(combinId(transToAlpha(col_num), row))
+					console.log('1');
+
+				} else {
+					cellModel.setCurrentCells(combinId(transToAlpha(col_num), row));
+				}
 			}
 		}
+
 	}
-
-
-
-	$(document).mousemove(function(e) {
-        // $('#XY').html('X 坐标 ： ' + e.pageX + ' | Y 坐标 ： ' + e.pageY);
-        // console.log(e.pageX, e.pageY);
-        // console.log(e.pageY);
-    });
-
 
 
     // dbclick事件：dbclick事件在用户完成迅速连续的两次点击之后触发，双击的速度取决于操作系统的设置。一般双击事件在页面中不经常使用。
@@ -298,10 +341,7 @@ var render = function(){
     });
 };
 render();
-// console.log($("#j1").addClass("abc"));
 
-// var a = cellModel.getCurCellsRange()
-// console.log(a.top);
 
 //调试区
 // console.log(transToAlpha(27));
@@ -354,7 +394,7 @@ function transToNum(char) {
 	return result;	
 }
 
-// 将id从字母加数字的字符串转换成数字加数字的数组,例:'a1' -> [1,1]
+// 将id从字母加数字的字符串转换成数字加数字的数组,例:'a1' -> [a,1]
 function sparateId(id) {
 	var col = id.replace(/[0-9]+$/g, ''),
 		row = id.replace(/^[a-z]+/gi, ''),
@@ -363,11 +403,13 @@ function sparateId(id) {
 }
 
 // 将id从两个数字转换成字母加数字的字符串,例:1,1 -> 'a1'
-function combinId(col_num, row) {
-	var col = transToAlpha(col_num),
+function combinId(col, row) {
+	var col = col,
 		row = row,
 		result = col + row;
-
+	if(typeof col != 'string' && typeof row != 'number'){
+		console.log('transToAlpha is fail')
+	}
 	return result;
 }
 
