@@ -6,50 +6,81 @@ var cellModel = (function() {
 		currentCells = {},
 		size = {
 			// 默认的列宽及行高分别为80和20
-			width: {'default': 80},
-			height: {'default': 20}
+			col_width: {'default': 60},
+			row_height: {'default': 20}
 		};
 
-	var cell = function(col, row, value) {
-		this.name = col + row;
-		this.col = col;
+	// 定义一个cell类以存储单个单元格信息
+	var cell = function(col, row, value) {	
+		// 将传入的列号从数字转换为字母
+		this.col = transToAlpha(col);
 		this.row = row;
+		this.name = this.col + this.row;
 		this.value = value;
 	};
 
+	//公用API
 	return {
 		setCell: function(col, row, value) {
 			var newCell = new cell(col, row, value);
 			cells[newCell.name] = newCell;
 		},
 		getCell: function(col, row) {
-			var id = col + row;
+			var id = transToAlpha(col) + row;
 			return cells[id];
 		},
 		getAllCells: function() {
 			return cells;
 		},
-		setCurrentCells: function(col, row) {
-			//设置当前激活的单元格
-			var id = col + row;
-			currentCells[id] = cells[id];
-			console.log('Cell \'' + currentCells[id].name + '\' has been added in currentCells');
+
+		//设置当前激活的单元格(每当某个单元格被选中时调用)
+		// setCurrentCells: function(col, row) {
+			
+		// 	var id = transToAlpha(col) + row;
+		// 	currentCells[id] = cells[id];
+		// 	console.log('Cell \'' + currentCells[id].name + '\' has been added in currentCells');
+		// },
+		// 传入被激活的单元格的id
+		setCurrentCells: function(id) {
+			// console.log('id : ' + id + ' cells[' + id + '] = ' + cells[id]);
+			// console.log(cells[id]);
+			if (cells[id]) {
+				currentCells[id] = cells[id];
+
+				// console.log(currentCells[id]);
+				// console.log('Cell \'' + currentCells[id].name + '\' has been added in currentCells');
+				// console.log('Here is all the currentCells:');
+				// for (curCell in currentCells) {
+				// 	console.log(curCell);
+				// }
+			}else {
+				console.log('Call setCurrentCells() fail');
+			}
+			
+			
 		},
 		getCurrentCells: function() {
-			console.log('getCurrentCells() has been call');		
-			console.log(currentCells);	
+			console.log('currentCells now was : ');
+			for( cell in currentCells){
+				console.log(currentCells[cell]);
+			}	
 			return currentCells;
 		},
 		clearCurrentCells: function() {
 			currentCells = {};
+			if(!currentCells.length){
+				console.log('currentCells clear fail');
+			}
 		},
-		setSize: function(size, pos, isCol) {
-			//当isCol为true,表示将要改变的为列宽, false则为行高.
-			if(isCol){
-				// 将指定的列设为指定的宽度
-				size.col[pos] = size;
+		// 修改单元格参数(长或宽, 行号或列号. 例: 若传入参数为(10,2),则表示将第2行的高设为10px)
+		setSize: function(size, pos) {
+			//当传入的pos参数为数字, 表示传入的是行号, 否则则是列号. (行号为数字, 列号为字母)
+			if(pos * 1){
+				// 修改行高
+				size.row_height[pos] = size;
 			}else{
-				size.row[pos] = size;
+				// 修改列宽
+				size.col_width[pos] = size;
 			}
 		},
 		getSize: function() {
@@ -58,35 +89,180 @@ var cellModel = (function() {
 	}
 }());
 
-var render = function(){;
+var render = function(){
 	var size = cellModel.getSize(),
-		windowWidth = $(window).height(),
+		windowWidth = $(window).width(),
 		windowHeight = $(window).height(),
 		i,y,
-		colNum = windowWidth/size.width,
-		rowNum = windowWidth/size.height
+		colNum = windowWidth/size.col_width.default,	//根据窗口宽度除以单元格宽度取得第一次渲染的单元格数量
+		rowNum = windowWidth/size.row_height.default;
 
-	var sheet = '<tr>';
-
-	for(i = colNum + 1; i > 0; i -- ) {
-		for(y = rowNum + 1; y > 0; i -- ) {
-			sheet += '<td class="cell"></td>'
-		}
+	// console.log(size, colNum, rowNum);
+	
+	//创建表头
+	$('#sheet1').append('<table class="table table-bordered table-head"><tbody></tbody></table>');
+	var sheet = '';
+	//创建列号a, b, c, d...
+	sheet += '<tr class="th">';
+	for(i = 0; i < colNum + 1; i ++ ) {
+		sheet += '<td class="th-col" id="col-' + transToAlpha(i) + '" style="padding: 0px;">' + transToAlpha(i) + '</td>';
+	}
+	//创建行号1, 2, 3, 4...
+	sheet += '</tr>';
+	for(y = 1; y < rowNum + 1; y ++ ) {
+		sheet += '<tr><td class="th-row" id="row-' + y + '" style="padding: 0px;">' + y + '</td></tr>';
 	}
 
-	$("#sheet1").append('<table class="table table-bordered"><tbody></tbody></table>');
-	
-	$("#sheet1 tbody").append(sheet);
-	
+	$('#sheet1 .table-head').append(sheet);
+
+	// 创建刚好能覆盖整个页面的单元格
+	var th_row = $('.th-row');
+
+	th_row.each(function(row){
+		// console.log(row);
+		for(var col = 0; col < colNum; col ++ ) {
+			cellModel.setCell(col + 1, row + 1, 0);
+			var cell = cellModel.getCell(col + 1, row + 1);
+			// console.log(cell);
+			$(this).closest('tr').append('<td class="cell" id="' + cell.name + '"></td>');
+		}
+	});
+	console.log(cellModel.getAllCells());
+	// 
+	//为每个cell添加鼠标监听(单击, 双击)
+	// $('.cell').click(function(){
+	// 	clearCurCellsStyle();
+	// 	// $(this).addClass("currentCells");
+	// 	// $(this).attr("style", "border: 5px solid #5c7a29;");
+	// 	cellModel.setCurrentCells($(this).attr('id'));
+	// })
 
 
+
+
+
+
+	
+	
+	var clearCurCellsStyle = function() {
+		cellModel.clearCurrentCells();
+	}
+	//对当前激活的单元格进行渲染
+	var setCurCellsStyle = function() {
+		var curCells = cellModel.getCurrentCells(),
+			top,
+			bottom,
+			left,
+			right,
+			cellTemp = {
+				'col': [],
+				'row': []
+			};
+
+		for(curCell in curCells){
+			cellTemp.col.push(transToNum(curCells[curCell].col)); 
+			cellTemp.row.push(curCells[curCell].row); 
+		}
+		top = Math.min.apply(null, cellTemp.row);
+		bottom = Math.max.apply(null, cellTemp.row);
+		left = Math.min.apply(null, cellTemp.col);
+		right = Math.max.apply(null, cellTemp.col);
+		// console.log(' cellTemp ' + cellTemp.col);
+		// console.log(' cellTemp ' + cellTemp.row);
+		// console.log('top: ' + top + ' bottom: ' + bottom + ' left: ' + left + ' right: ' + right);
+		
+		
+		
+		
+		
+	}
+	cellModel.setCurrentCells('a1');
+	// console.log(cellModel.getCurrentCells());
+	setCurCellsStyle();
+
+
+	$(document).mousemove(function(e) {
+        // $('#XY').html('X 坐标 ： ' + e.pageX + ' | Y 坐标 ： ' + e.pageY);
+        // console.log(e.pageX, e.pageY);
+        // console.log(e.pageY);
+    });
+
+
+
+    // dbclick事件：dbclick事件在用户完成迅速连续的两次点击之后触发，双击的速度取决于操作系统的设置。一般双击事件在页面中不经常使用。
+    $(document).dblclick(function(){
+	    alert('dbclick function is running !');
+    });
+};
+
+render();
+
+
+//调试区
+// console.log(transToAlpha(27));
+// console.log(transToAlpha(1));
+// console.log('a: ' + transToNum('a') + ' aa: ' + transToNum('aa'));
+
+
+
+
+//将列号从数字改为字母,例:传入1则返回'a', 传入27则为'aa'.
+function transToAlpha(num) {
+	// 判断输入是否为数字
+	if(typeof(num) != "number" ){
+		console.log(num + " is no a number!!");
+		return ;
+	}
+	//将输入的数字分为第一位及第二位
+	var time_1 = parseInt((num - 1) / 26),
+	time_2 = (num - 1) % 26,
+	result = '';
+	// 当num小于27时, 转换出来的字符串只有一位
+	if(num < 27){
+		result = String.fromCharCode( 'a'.charCodeAt() + time_2);
+	}else {
+		result = String.fromCharCode('a'.charCodeAt() -1 + time_1 ) + String.fromCharCode( 'a'.charCodeAt() + time_2);
+	}
+	
+	return result;
 }
 
+
+//将列号从数字改为字母,例:传入'a'则返回1, 传入'aa'则返回27.
+function transToNum(char) {
+	var charStr = [],
+	result = '';
+
+	if(typeof(char) != "string" ){
+		// alert(num + " is no a number!!");
+		console.log(char + " is no a string!!");
+		return;
+	}
+
+	if(char.length == 1){
+		result = char.charCodeAt() - 'a'.charCodeAt() + 1
+	}else if(char.length == 2){
+		charStr = char.split("")
+		result = (charStr[0].charCodeAt() - 'a'.charCodeAt() + 1) * 26 + (charStr[1].charCodeAt() - 'a'.charCodeAt() + 1);
+	}
+	
+	return result;	
+}
+
+
+
+
 $(window).load(function(){
-	console.log($(window).height());
-	console.log($(window).width());
-	console.log($(document).height());
-	console.log($(document).width());
+	// console.log($(window).height());
+	// console.log($(window).width());
+	// console.log($(document).height());
+	// console.log($(document).width());
+	$(window).resize(function () {          //当浏览器大小变化时
+	    // alert($(window).height());          //浏览器时下窗口可视区域高度
+	    // alert($(document).height());        //浏览器时下窗口文档的高度
+	    // alert($(document.body).height());   //浏览器时下窗口文档body的高度
+	    // alert($(document.body).outerHeight(true)); //浏览器时下窗口文档body的总高度 包括border padding margin
+	});
 });
 
 
@@ -145,7 +321,7 @@ $(window).load(function(){
 	 //    	$(cell.text($(this).val()))
 	    	
 	 //    	/* 
-	 //    	octopus.getCurrentCell.changCell
+	 //    	octopus.getCurrentCells.changCell
 	 //    	*/
 	    	
 		// });

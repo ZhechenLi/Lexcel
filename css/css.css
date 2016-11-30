@@ -1,29 +1,28 @@
+:root{
+	--base-cell-width--: 30px;
+	--base-cell-height--: 12px;
+
+}
+
 body{
 	padding-top: 170px;	
 	margin-bottom: : 0px;	
+	/*background-color: #777b7f;*/
 
 }
-
-header{
-	background: white;
-}
-
 .sheet{
 	overflow-x：scroll;
 }
 .cell{
-	/*width: 250px;*/
-	height: 37px;
-	width: 67px;
+	width: var( --base-cell-width-- );
+	height: var( --base-cell-height-- );
 	margin: 0px;
 	padding: 0px;
-	text-align: center;
-	
 }
 
 .table{
-	overflow-x: scroll; 
-	width: 2000px;
+	overflow-x: hidden; 
+	width: 1200px;	
 }
 
 .nav{
@@ -33,6 +32,28 @@ header{
 	margin: 0px;
 	padding: 0px; 
 	border: 0px;
-z-index: 999;
+	z-index: 999;
 	position: absolute;
+}
+/*列标*/
+.th-col {
+	width: var( --base-cell-width-- );
+	height: 12px;
+	padding: 0px;
+}
+/*行标*/
+.th-row {
+	width: 10px;
+	height: var( --base-cell-height-- );	
+}
+.table-head {
+	text-align: center;
+}
+
+td{
+	padding: 0px;
+}
+
+.currentCells{
+	border: 5px solid #5c7a29;
 }

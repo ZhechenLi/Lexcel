@@ -11,7 +11,7 @@
 
 	<!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
 	<script src="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-	<script src="scripts/app.js"></script>
+	
 	<link href="css/css.css" rel="stylesheet">
 </head>
 <body>
@@ -42,10 +42,10 @@
 		<hr>
 	</ul>
 </header>
-<input type="type" class="a" onblur="myFunction(this)">
+<!-- <input type="type" class="a" onblur="myFunction(this)"> -->
 <!-- <div >a</div> -->
 
-<div class="tab-content">
+<div class="tab-content" id="table-field">
 
     <div id="sheet1" class="tab-pane in active" >	
 	   
@@ -56,8 +56,8 @@
 				</tr>
 			</tbody>
 		</table> -->
- <h3>菜单 0</h3>
-	  <p>这是菜单 1 显示的内容。这是菜单 1 显示的内容。这是菜单 1 显示的内容。</p>
+ <!-- <h3>菜单 0</h3> -->
+	 <!--  <p>这是菜单 1 显示的内容。这是菜单 1 显示的内容。这是菜单 1 显示的内容。</p> -->
 			
 	</div>
 	<div id="sheet2" class="tab-pane">
@@ -74,7 +74,7 @@
 	</div>
 </div>
 
-<footer>
+<!-- <footer>
 	<ul class="nav nav-tabs nav-justified navbar-fixed-bottom">
 		<li class="active"><a data-toggle="tab" href="#sheet1">sheet1</a></li>
 		<li><a data-toggle="tab" href="#sheet2">sheet2</a></li>
@@ -83,7 +83,7 @@
 		
 		<p id="status" style="background: #337ab7; color: white; margin: 0px;">就绪</p>
 	</ul>
-</footer>
+</footer> -->
 
 <script>
 $("tbody .cell").click(function(){
@@ -108,5 +108,7 @@ function myFunction(){
 }
 
 </script>
+<script src="scripts/app.js"></script>
+
 </body>
 </html>
