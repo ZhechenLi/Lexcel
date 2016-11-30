@@ -8,7 +8,8 @@ var cellModel = (function() {
 			// 默认的列宽及行高分别为80和20
 			col_width: {'default': 60},
 			row_height: {'default': 20}
-		};
+		}
+		;
 
 	// 定义一个cell类以存储单个单元格信息
 	var cell = function(col, row, value) {	
@@ -19,8 +20,48 @@ var cellModel = (function() {
 		this.value = value;
 	};
 
+	(function() {
+		
+	}());
+
+
 	//公用API
 	return {
+		// 返回当前激活单元格的最大范围, 例:
+		// currentCells = {
+		// 		a1,a2,a3,
+		// 		b1,b2,b3,
+		// 		c1,c2,c3,
+		// 		d1,d2,d3,
+		// 		e1,e2,e3,
+		// }
+		// 返回{'top': 1, 'bottom': 5, 'left': 1, 'right': 3};
+		getCurCellsRange: function() {
+			var top,
+				bottom,
+				left,
+				right,
+				cellTemp = {
+					'col': [],
+					'row': []
+				};
+
+			for(curCell in currentCells){
+				cellTemp.col.push(transToNum(currentCells[curCell].col)); 
+				cellTemp.row.push(currentCells[curCell].row); 
+			}
+
+			top = Math.min.apply(null, cellTemp.row);
+			bottom = Math.max.apply(null, cellTemp.row);
+			left = Math.min.apply(null, cellTemp.col);
+			right = Math.max.apply(null, cellTemp.col);
+
+			return {'top': top,
+					'bottom': bottom,
+					'left': left,
+					'right': right
+			};
+		},
 		setCell: function(col, row, value) {
 			var newCell = new cell(col, row, value);
 			cells[newCell.name] = newCell;
@@ -44,8 +85,12 @@ var cellModel = (function() {
 		setCurrentCells: function(id) {
 			// console.log('id : ' + id + ' cells[' + id + '] = ' + cells[id]);
 			// console.log(cells[id]);
+			console.log($('#' + id));
+			// console.log('dasd');
 			if (cells[id]) {
 				currentCells[id] = cells[id];
+				console.log('setCurCell');
+				$('#' + id).addClass('currentCells');
 
 				// console.log(currentCells[id]);
 				// console.log('Cell \'' + currentCells[id].name + '\' has been added in currentCells');
@@ -136,30 +181,25 @@ var render = function(){
 		}
 	});
 	
-
+	// console.log($('#j1').addClass('currentCells'));
+	console.log('render');
 	/*
 	
-
-						单元格初始化
+		单元格初始化
 
 	*/
 
 
-	// 为每个cell添加鼠标监听(单击, 双击)
-	// $('.cell').click(function(){
-	// 	clearCurCellsStyle();
-	// 	$(this).addClass("currentCells")
-	// 	cellModel.setCurrentCells($(this).attr('id'));
-	// 	setCurCellsStyle();	//对选中的单元格进行渲染
-	// })
+
 	
 
 	var mouseStatus = 'up';	// 记录鼠标左键是否松开
+
 	$('.cell').mousedown(function(){
 		mouseStatus = 'down';
 		console.log('mousedown');
 		clearCurCellsStyle();
-		$(this).addClass("currentCells");
+		
 		cellModel.setCurrentCells($(this).attr('id'));
 		setCurCellsStyle();	//对选中的单元格进行渲染
 	});
@@ -169,13 +209,13 @@ var render = function(){
 		mouseStatus = 'up';
 	});
 
-	
 	$('.cell').mousemove(function(){
 		if(	mouseStatus == 'down'){
 			console.log('mousemove!!');
 
-			$(this).addClass("currentCells");
+			
 			cellModel.setCurrentCells($(this).attr('id'));
+			setCurRange()
 			setCurCellsStyle();	//对选中的单元格进行渲染
 		}
 	});
@@ -184,7 +224,7 @@ var render = function(){
 	// 	console.log('mousemove!!');
 	// })
 	
-	
+
 
 
 
@@ -202,69 +242,44 @@ var render = function(){
 	}
 
 	//对当前激活的单元格进行渲染
-	var setCurCellsStyle = function() {
-		var curCells = cellModel.getCurrentCells(),
-			top,
-			bottom,
-			left,
-			right,
-			cellTemp = {
-				'col': [],
-				'row': []
-			};
-
-		for(curCell in curCells){
-			cellTemp.col.push(transToNum(curCells[curCell].col)); 
-			cellTemp.row.push(curCells[curCell].row); 
-		}
-		top = Math.min.apply(null, cellTemp.row);
-		bottom = Math.max.apply(null, cellTemp.row);
-		left = Math.min.apply(null, cellTemp.col);
-		right = Math.max.apply(null, cellTemp.col);
-		
+	var setCurCellsStyle = function() {		
+		var range = cellModel.getCurCellsRange();
+		// console.log(range);
 		$('.currentCells').each(function(){
 			$(this).removeAttr('style');
 			var thisCell = $(this);
-			var id = dealId(thisCell.attr('id'));
-			// console.log(id);
-			// console.log(' cellTemp.col ' + cellTemp.col);
-			// console.log(' cellTemp.row ' + cellTemp.row);
-			// console.log('top: ' + top + ' bottom: ' + bottom + ' left: ' + left + ' right: ' + right);
-	
-			// if(id[1] == top) {
-			// 	thisCell.attr('style', 'border-top:5px solid #5c7a29;')
-			// } else if(id[1] == bottom) {
-			// 	thisCell.attr('style', 'border-bottom:5px solid #5c7a29;')
-			// } else if(id[0] == left) {
-			// 	thisCell.attr('style', 'border-left:5px solid #5c7a29;')
-			// } else if(id[0] == right) {
-			// 	thisCell.attr('style', 'border-right:5px solid #5c7a29;')
-			// }
+			var id = sparateId(thisCell.attr('id'));
 			
 			// 设置激活区域的边框颜色
 			thisCell.css((function(){
 				var boderSet = {},
 					borderStyle = '3px solid #5c7a29';
 
-				if(id[1] == top) {
+				if(id[1] == range.top) {
 					boderSet['border-top'] = borderStyle;
 				}  
-				if(id[1] == bottom) {
+				if(id[1] == range.bottom) {
 					boderSet['border-bottom'] = borderStyle;
 				} 
-				if(transToNum(id[0]) == left) {
+				if(transToNum(id[0]) == range.left) {
 					boderSet['border-left'] = borderStyle;
 				}
-				if(transToNum(id[0]) == right) {
+				if(transToNum(id[0]) == range.right) {
 					boderSet['border-right'] = borderStyle;
 				}
-				// console.log(id);
-				// console.log(boderSet)
 				return boderSet;
 			}()))
-			// thisCell.css({'border-top': '5px solid #5c7a29'});
 		})
 
+	}
+
+	var setCurRange = function() {
+		var range = cellModel.getCurCellsRange()
+		for(var row = range.top; row <= range.bottom; row ++) {
+			for(var col = range.left; col <= range.right; col ++) {
+				cellModel.setCurrentCells(combinId(col, row));
+			}
+		}
 	}
 
 
@@ -282,9 +297,11 @@ var render = function(){
 	    alert('dbclick function is running !');
     });
 };
-
 render();
+// console.log($("#j1").addClass("abc"));
 
+// var a = cellModel.getCurCellsRange()
+// console.log(a.top);
 
 //调试区
 // console.log(transToAlpha(27));
@@ -338,13 +355,21 @@ function transToNum(char) {
 }
 
 // 将id从字母加数字的字符串转换成数字加数字的数组,例:'a1' -> [1,1]
-function dealId(id) {
+function sparateId(id) {
 	var col = id.replace(/[0-9]+$/g, ''),
 		row = id.replace(/^[a-z]+/gi, ''),
 		result = [col,row];
 	return result;
 }
 
+// 将id从两个数字转换成字母加数字的字符串,例:1,1 -> 'a1'
+function combinId(col_num, row) {
+	var col = transToAlpha(col_num),
+		row = row,
+		result = col + row;
+
+	return result;
+}
 
 
 $(window).load(function(){
