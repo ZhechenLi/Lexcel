@@ -12,7 +12,8 @@ var cellModel = (function() {
 		top,
 		bottom,
 		left,
-		right;
+		right,
+		firstCurCell = {};
 
 	// 定义一个cell类以存储单个单元格信息
 	var cell = function(col, row, value) {	
@@ -41,63 +42,115 @@ var cellModel = (function() {
 		// 返回{'top': 1, 'bottom': 5, 'left': 1, 'right': 3}; 
 		// 输入当前鼠标悬停的单元格id
 		getCurCellsRange: function() {
-			var cellTemp = {
-					'col': [],
-					'row': []
-				};
-
-			if (currentCells.length == 1) {
-
-				top = cells[id].row;
-				bottom = cells[id].row;
-				left = transToNum(cells[id].col);
-				right = transToNum(cells[id].col);
-
-			} else {
-				for(curCell in currentCells){
-					cellTemp.col.push(transToNum(currentCells[curCell].col)); 
-					cellTemp.row.push(currentCells[curCell].row); 
-				}
-
-				top = Math.min.apply(null, cellTemp.row);
-				bottom = Math.max.apply(null, cellTemp.row);
-				left = Math.min.apply(null, cellTemp.col);
-				right = Math.max.apply(null, cellTemp.col);
-			}
-
-			
-
-			return {'top': top,
-					'bottom': bottom,
-					'left': left,
-					'right': right
+			return {
+				'top': top,
+				'bottom': bottom,
+				'left': transToNum(left),
+				'right': transToNum(right)
 			};
 		},
-		setCurRangeTop: function(top) {
-			this.top = top;
-		},
-		setCurRangeBottom: function(bottom) {
-			this.bottom = bottom;
-		},
-		setCurRangeLeft: function(left) {
-			this.left = left;
-		},
-		setCurRangeRight: function(right) {
-			this.right = right;
-		},
-		getCurRangeTop: function(top) {
-			return top;
-		},
-		getCurRangeBottom: function(bottom) {
-			return bottom;
-		},
-		getCurRangeLeft: function(left) {
-			return left;
-		},
-		getCurRangeRight: function(right) {
-			return right;
-		},
+		setCurCellsRange: function(cur_id) {
+			// 在currentCells为空的时无法调用此方法
+			if ($.isEmptyObject(currentCells)) {
+				console.log('setCurCellsRange() was wrong!');
+				return;
+			}
 
+			var curCell = currentCells[cur_id],
+				firstCell = firstCurCell;
+
+			if(firstCell.name == cur_id){
+				console.log('only have one curCell');
+
+			}
+
+			for(var row = top; row <= bottom; row ++) {
+				for(var col_num = transToNum(left); col_num <= transToNum(right); col_num ++) {
+					// console.log('col_num: ' + col_num);
+					if(row > curCell['row'] || col_num > transToNum(curCell['col'])) {
+						this.deleteCurrentCell(combinId(transToAlpha(col_num), row))
+
+					} else {
+						this.setCurrentCells(combinId(transToAlpha(col_num), row));
+					}
+				}
+			}
+
+
+			if(curCell['col'] >= firstCell['col']) {
+				// curCell 在 firstCell的右边
+				left = firstCell.col;
+				right = curCell.col;
+				if(curCell.row >= firstCell.row) {
+					// curCell 在 firstCell的右下
+					top = firstCell.row;
+					bottom = curCell.row;
+				}else {
+					// curCell 在 firstCell的右上
+					top = curCell.row;
+					bottom = firstCell.row;
+				}
+			}else if(curCell.row > firstCell.row) {
+				// curCell 在 firstCell 的左下
+				top = firstCell.row;
+				bottom = curCell.row;
+				left = curCell.col;
+				right = firstCell.col;
+			}else if(curCell.row < firstCell.row) {
+				// curCell 在 firstCell 的左上
+				top = curCell.row;
+				bottom = firstCell.row; 
+				left = curCell.col;
+				right = firstCell.col;
+			}else {
+				console.log('getCurCellsRange() was wrong!');
+			}
+			console.log('first-id: ' + firstCell.name + ' cur_id: ' + cur_id);
+
+		},
+		// setCurRangeTop: function(top) {
+		// 	this.top = top;
+		// },
+		// setCurRangeBottom: function(bottom) {
+		// 	this.bottom = bottom;
+		// },
+		// setCurRangeLeft: function(left) {
+		// 	this.left = left;
+		// },
+		// setCurRangeRight: function(right) {
+		// 	this.right = right;
+		// },
+		// getCurRangeTop: function(top) {
+		// 	return top;
+		// },
+		// getCurRangeBottom: function(bottom) {
+		// 	return bottom;
+		// },
+		// getCurRangeLeft: function(left) {
+		// 	return left;
+		// },
+		// getCurRangeRight: function(right) {
+		// 	return right;
+		// },
+		getFirstCurCell:function(){
+			if(firstCurCell.length == 0){
+				console.log('getFirstCurCell() was wrong!')
+			}
+			return firstCurCell;
+		},
+		setFirstCurCell: function(id){
+			firstCurCell = cells[id];
+			if(firstCurCell == {}){
+				console.log('setFirstCurCell() was wrong!')
+			}
+		},
+		clearFirstCurCell: function(id){
+			firstCurCell = {};
+			// console.log($.isEmptyObject(firstCurCell));
+			if(!$.isEmptyObject(firstCurCell)){
+				console.log('clearFirstCurCell() was wrong!')
+			}
+		},
 		setCell: function(col, row, value) {
 			var id = col + row;
 			if(!(id in cells)){
@@ -106,7 +159,6 @@ var cellModel = (function() {
 			} else {
 				cells[id].value = value;
 			}
-			
 		},
 		getCell: function(id) {
 			
@@ -146,8 +198,13 @@ var cellModel = (function() {
 		},
 		clearCurrentCells: function() {
 			currentCells = {};
-			if(currentCells.length){
-				console.log('currentCells clear fail');
+			$('.currentCells').each(function(){
+				$(this).removeAttr('style');
+				$(this).removeClass('currentCells');
+			});
+
+			if(!$.isEmptyObject(currentCells)){
+				console.log('clearCurrentCells(): currentCells clear fail');
 			}
 		},
 		// 修改单元格参数(长或宽, 行号或列号. 例: 若传入参数为(10,2),则表示将第2行的高设为10px)
@@ -252,37 +309,44 @@ var render = function(){
 	var mouseStatus = 'up';	// 记录鼠标左键是否松开
 
 	$('.cell').mousedown(function(){
+		var id = $(this).attr('id');
 		mouseStatus = 'down';
-		console.log('mousedown');
-		clearCurCellsStyle();
+		// console.log('mousedown');
+		cellModel.clearCurrentCells();
+		cellModel.setFirstCurCell(id);
+
+		cellModel.setCurrentCells(id);
 		
-		cellModel.setCurrentCells($(this).attr('id'));
+		cellModel.setCurCellsRange(id);
+		console.log(cellModel.getCurCellsRange());
 		setCurCellsStyle();	//对选中的单元格进行渲染
 	});
 
 	$('.cell').mouseup(function(){
+		cellModel.clearFirstCurCell();
 		console.log('mouseup');
 		mouseStatus = 'up';
 	});
 
 	$('.cell').mousemove(function(){
 		if(	mouseStatus == 'down'){
-			console.log('mousemove!!');
+			// console.log('mousemove!!');
 			cellModel.setCurrentCells($(this).attr('id'));
-			setCurRange($(this).attr('id'));
+			cellModel.setCurCellsRange($(this).attr('id'));
+			console.log(cellModel.getCurCellsRange());
 			setCurCellsStyle();	//对选中的单元格进行渲染
 
 		}
 	});
 	
-	// 清除当前激活单元格的渲染
-	var clearCurCellsStyle = function() {
-		cellModel.clearCurrentCells();
-		$('.currentCells').each(function(){
-			$(this).removeAttr('style');
-			$(this).removeClass('currentCells');
-		});
-	}
+	// 清除当前激活单元格的渲染 //已并入cellModel.clearCurrentCells
+	// var clearCurCellsStyle = function() {
+	// 	cellModel.clearCurrentCells();
+	// 	$('.currentCells').each(function(){
+	// 		$(this).removeAttr('style');
+	// 		$(this).removeClass('currentCells');
+	// 	});
+	// }
 
 	//对当前激活的单元格进行渲染
 	var setCurCellsStyle = function() {		
@@ -303,10 +367,10 @@ var render = function(){
 				if(id[1] == range.bottom) {
 					boderSet['border-bottom'] = borderStyle;
 				} 
-				if(transToNum(id[0]) == range.left) {
+				if(id[0] == range.left) {
 					boderSet['border-left'] = borderStyle;
 				}
-				if(transToNum(id[0]) == range.right) {
+				if(id[0] == range.right) {
 					boderSet['border-right'] = borderStyle;
 				}
 				return boderSet;
@@ -314,25 +378,25 @@ var render = function(){
 		})
 	}
 
-	var setCurRange = function(first_id, cur_id) {
-		var range = cellModel.getCurCellsRange(),
-			firstCell = cellModel.getCell(first_id),
-			curCell = cellModel.getCell(cur_id);
+	// var setCurRange = function(first_id, cur_id) {
+	// 	var range = cellModel.getCurCellsRange(),
+	// 		curCell = cellModel.getCell(cur_id);
 		
-		for(var row = range.top; row <= range.bottom; row ++) {
-			for(var col_num = range.left; col_num <= range.right; col_num ++) {
+	// 	for(var row = range.top; row <= range.bottom; row ++) {
+	// 		for(var col_num = range.left; col_num <= range.right; col_num ++) {
 
-				if(row > curCell['row'] || col_num > transToNum(curCell['col'])) {
-					cellModel.deleteCurrentCell(combinId(transToAlpha(col_num), row))
-					console.log('1');
+	// 			if(row > curCell['row'] || col_num > transToNum(curCell['col'])) {
+	// 				cellModel.deleteCurrentCell(combinId(transToAlpha(col_num), row))
 
-				} else {
-					cellModel.setCurrentCells(combinId(transToAlpha(col_num), row));
-				}
-			}
-		}
-
-	}
+	// 			} else {
+	// 				cellModel.setCurrentCells(combinId(transToAlpha(col_num), row));
+	// 			}
+	// 		}
+	// 	}
+	// 	// console.log('first-id: ' + first_id + 'cur_id: ' + cur_id);
+	// 	// 
+	// 	cellModel.setCurCellsRange(first_id, cur_id);
+	// }
 
 
     // dbclick事件：dbclick事件在用户完成迅速连续的两次点击之后触发，双击的速度取决于操作系统的设置。一般双击事件在页面中不经常使用。
@@ -356,7 +420,7 @@ function transToAlpha(num) {
 	// 判断输入是否为数字
 	if(typeof(num) != "number" ){
 		console.log(num + " is no a number!!");
-		return ;
+		return num;
 	}
 	//将输入的数字分为第一位及第二位
 	var time_1 = parseInt((num - 1) / 26),
@@ -373,7 +437,7 @@ function transToAlpha(num) {
 }
 
 
-//将列号从数字改为字母,例:传入'a'则返回1, 传入'aa'则返回27.
+//将列号从字母改为数字,例:传入'a'则返回1, 传入'aa'则返回27.
 function transToNum(char) {
 	var charStr = [],
 	result = '';
@@ -381,7 +445,7 @@ function transToNum(char) {
 	if(typeof(char) != "string" ){
 		// alert(num + " is no a number!!");
 		console.log(char + " is no a string!!");
-		return;
+		return char;
 	}
 
 	if(char.length == 1){
@@ -402,7 +466,7 @@ function sparateId(id) {
 	return result;
 }
 
-// 将id从两个数字转换成字母加数字的字符串,例:1,1 -> 'a1'
+// 将id转换成字母加数字的字符串,例:[a,1] -> 'a1'
 function combinId(col, row) {
 	var col = col,
 		row = row,
