@@ -49,21 +49,23 @@ var cellModel = (function() {
 				'right': transToNum(right)
 			};
 		},
+		// 
+		// 输入当前坐标, 激活所有
 		setCurCellsRange: function(cur_id) {
 			// 在currentCells为空的时无法调用此方法
-			if ($.isEmptyObject(currentCells)) {
+			if ($.isEmptyObject(this.currentCells)) {
 				console.log('setCurCellsRange() was wrong!');
 				return;
 			}
 
-			var curCell = currentCells[cur_id],
+			var curCell = this.currentCells[cur_id],
 				firstCell = firstCurCell;
 
 			if(firstCell.name == cur_id){
 				console.log('only have one curCell');
-
 			}
 
+			// 激活选中框内所有的元素, 将框外的被激活单元格清除
 			for(var row = top; row <= bottom; row ++) {
 				for(var col_num = transToNum(left); col_num <= transToNum(right); col_num ++) {
 					// console.log('col_num: ' + col_num);
@@ -76,7 +78,7 @@ var cellModel = (function() {
 				}
 			}
 
-
+			// 根据第一个被激活单元格及当前激活单元格确定选框四角坐标
 			if(curCell['col'] >= firstCell['col']) {
 				// curCell 在 firstCell的右边
 				left = firstCell.col;
@@ -105,33 +107,10 @@ var cellModel = (function() {
 			}else {
 				console.log('getCurCellsRange() was wrong!');
 			}
-			console.log('first-id: ' + firstCell.name + ' cur_id: ' + cur_id);
+			// console.log('setCurCellsRange: ');
+			// console.log(currentCells);
 
 		},
-		// setCurRangeTop: function(top) {
-		// 	this.top = top;
-		// },
-		// setCurRangeBottom: function(bottom) {
-		// 	this.bottom = bottom;
-		// },
-		// setCurRangeLeft: function(left) {
-		// 	this.left = left;
-		// },
-		// setCurRangeRight: function(right) {
-		// 	this.right = right;
-		// },
-		// getCurRangeTop: function(top) {
-		// 	return top;
-		// },
-		// getCurRangeBottom: function(bottom) {
-		// 	return bottom;
-		// },
-		// getCurRangeLeft: function(left) {
-		// 	return left;
-		// },
-		// getCurRangeRight: function(right) {
-		// 	return right;
-		// },
 		getFirstCurCell:function(){
 			if(firstCurCell.length == 0){
 				console.log('getFirstCurCell() was wrong!')
@@ -144,7 +123,7 @@ var cellModel = (function() {
 				console.log('setFirstCurCell() was wrong!')
 			}
 		},
-		clearFirstCurCell: function(id){
+		clearFirstCurCell: function(){
 			firstCurCell = {};
 			// console.log($.isEmptyObject(firstCurCell));
 			if(!$.isEmptyObject(firstCurCell)){
@@ -170,42 +149,44 @@ var cellModel = (function() {
 		getAllCells: function() {
 			return cells;
 		},
-
-		//设置当前激活的单元格(每当某个单元格被选中时调用)
-		// setCurrentCells: function(col, row) {
-			
-		// 	var id = transToAlpha(col) + row;
-		// 	currentCells[id] = cells[id];
-		// 	console.log('Cell \'' + currentCells[id].name + '\' has been added in currentCells');
-		// },
-		// 传入被激活的单元格的id
 		setCurrentCells: function(id) {
-			if (!(id in currentCells)) {
-				currentCells[id] = cells[id];
-				// console.log('setCurCell');
+			if($.isEmptyObject(this.currentCells)){
+				this.setFirstCurCell(id);
+			}
+			if (!(id in this.currentCells)) {
+				this.currentCells[id] = cells[id];
 				$('#' + id).addClass('currentCells');
 			}
+			// this.setCurCellsRange(id);
 		},
 		getCurrentCells: function() {
-			console.log('currentCells now was : ');
-			for( cell in currentCells){
+			if ($.isEmptyObject(this.currentCells)) {
+				console.log('currentCells was empty!!');
+				return;
+			}
+			console.log('--- currentCells now was ---');
+			for( cell in this.currentCells){
 				console.log(currentCells[cell]);
 			}	
-			return currentCells;
+			console.log('--- currentCells now was ---');
+			return this.currentCells;
 		},
 		deleteCurrentCell: function(id) {
-			delete currentCells[id];
+			delete this.currentCells[id];
 		},
 		clearCurrentCells: function() {
-			currentCells = {};
+			
+			this.currentCells = {};
 			$('.currentCells').each(function(){
 				$(this).removeAttr('style');
 				$(this).removeClass('currentCells');
 			});
-
-			if(!$.isEmptyObject(currentCells)){
+			this.clearFirstCurCell();
+			if(!$.isEmptyObject(this.currentCells)){
 				console.log('clearCurrentCells(): currentCells clear fail');
 			}
+
+			
 		},
 		// 修改单元格参数(长或宽, 行号或列号. 例: 若传入参数为(10,2),则表示将第2行的高设为10px)
 		setSize: function(size, pos) {
@@ -267,7 +248,6 @@ var render = function(){
 				$(this).closest('tr').append('<td class="cell" id="' + cell.name + '"></td>');
 			}
 		});
-
 	};
 
 	//创建表头
@@ -311,42 +291,31 @@ var render = function(){
 	$('.cell').mousedown(function(){
 		var id = $(this).attr('id');
 		mouseStatus = 'down';
-		// console.log('mousedown');
-		cellModel.clearCurrentCells();
-		cellModel.setFirstCurCell(id);
 
-		cellModel.setCurrentCells(id);
+		cellModel.clearCurrentCells();
 		
+		cellModel.setCurrentCells(id);
+		console.log(cellModel.getCurrentCells());
 		cellModel.setCurCellsRange(id);
-		console.log(cellModel.getCurCellsRange());
+		
 		setCurCellsStyle();	//对选中的单元格进行渲染
+		
 	});
 
 	$('.cell').mouseup(function(){
-		cellModel.clearFirstCurCell();
+		console.log(cellModel.getCurCellsRange());
 		console.log('mouseup');
 		mouseStatus = 'up';
 	});
 
 	$('.cell').mousemove(function(){
 		if(	mouseStatus == 'down'){
-			// console.log('mousemove!!');
-			cellModel.setCurrentCells($(this).attr('id'));
-			cellModel.setCurCellsRange($(this).attr('id'));
-			console.log(cellModel.getCurCellsRange());
+			var id = $(this).attr('id');
+			cellModel.setCurrentCells(id);
+			cellModel.setCurCellsRange(id);
 			setCurCellsStyle();	//对选中的单元格进行渲染
-
 		}
 	});
-	
-	// 清除当前激活单元格的渲染 //已并入cellModel.clearCurrentCells
-	// var clearCurCellsStyle = function() {
-	// 	cellModel.clearCurrentCells();
-	// 	$('.currentCells').each(function(){
-	// 		$(this).removeAttr('style');
-	// 		$(this).removeClass('currentCells');
-	// 	});
-	// }
 
 	//对当前激活的单元格进行渲染
 	var setCurCellsStyle = function() {		
@@ -367,37 +336,16 @@ var render = function(){
 				if(id[1] == range.bottom) {
 					boderSet['border-bottom'] = borderStyle;
 				} 
-				if(id[0] == range.left) {
+				if(transToNum(id[0]) == range.left) {
 					boderSet['border-left'] = borderStyle;
 				}
-				if(id[0] == range.right) {
+				if(transToNum(id[0]) == range.right) {
 					boderSet['border-right'] = borderStyle;
 				}
 				return boderSet;
 			}()))
 		})
 	}
-
-	// var setCurRange = function(first_id, cur_id) {
-	// 	var range = cellModel.getCurCellsRange(),
-	// 		curCell = cellModel.getCell(cur_id);
-		
-	// 	for(var row = range.top; row <= range.bottom; row ++) {
-	// 		for(var col_num = range.left; col_num <= range.right; col_num ++) {
-
-	// 			if(row > curCell['row'] || col_num > transToNum(curCell['col'])) {
-	// 				cellModel.deleteCurrentCell(combinId(transToAlpha(col_num), row))
-
-	// 			} else {
-	// 				cellModel.setCurrentCells(combinId(transToAlpha(col_num), row));
-	// 			}
-	// 		}
-	// 	}
-	// 	// console.log('first-id: ' + first_id + 'cur_id: ' + cur_id);
-	// 	// 
-	// 	cellModel.setCurCellsRange(first_id, cur_id);
-	// }
-
 
     // dbclick事件：dbclick事件在用户完成迅速连续的两次点击之后触发，双击的速度取决于操作系统的设置。一般双击事件在页面中不经常使用。
     $(document).dblclick(function(){
